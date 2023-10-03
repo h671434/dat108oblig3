@@ -26,7 +26,16 @@ class DeltagerManager {
     }
 
     #finndeltager() {
-        // Fyll inn kode        
+        // Fyll inn kode  
+        const resokElm = this.#finndeltagerElm.getElementsByClassName("hidden resultatok")[0];
+        const ingenResElm = this.#finndeltagerElm.getElementsByClassName("hidden resultatmangler")[0];
+        const inputElm = this.#finndeltakerElm.getElementsByTagName("input")[0]; 
+        
+        var input = inputElm.value;
+        
+        var deltaker = this.#deltakere.get(input);
+        
+        
     }
 
 
@@ -40,16 +49,14 @@ class DeltagerManager {
         const navnReg = /\p{L}{2,}(?:-\p{L}{2,})?/gu;
         
          // Fyll inn kode
-        var input = this.#regElm.getElementsByTagName("input")[0].value;
+        const inputElm = this.#regElm.getElementsByTagName("input")[0]; 
         
-        var startnummer = input.match(startnummerReg)[0];
-        var navn = this.#formaterNavn(input.match(navnReg));
-        var slutttid = input.match(tidReg)[0];
+        var input = inputElm.value;
         
         var deltaker = {
-			startnummer,
-			navn,
-			slutttid,
+			startnummer: this.#getStartnummer(input),
+			navn: this.#getNavn(input),
+			slutttid: this.#getSlutttid(input),
 		};
 
 		this.#deltakere.set(startnummer, deltaker);
@@ -57,7 +64,15 @@ class DeltagerManager {
       	console.log(deltaker);
     }
     
-    // Fyll inn evt. hjelpemetoder
+       // Fyll inn evt. hjelpemetoder
+    
+    #getStartnummer(input) {
+		return input.match(startnummerReg)[0]
+	}
+    
+    #getNavn(input) {
+		return this.#formaterNavn(input.match(navnReg));
+	}    
     
     #formaterNavn(navnMatcher) {
 		const forsteBokstavReg = /(^|-)(\p{L})/gu;
@@ -74,8 +89,8 @@ class DeltagerManager {
 		return formatertNavn;
 	}
 	
-	#validerInput(deltaker) {
-		
+	#getSlutttid(input) {
+		return input.match(tidReg)[0];
 	}
     
 }
