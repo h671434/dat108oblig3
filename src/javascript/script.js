@@ -5,10 +5,14 @@ document.getElementById("root")
     .getElementsByTagName("button")[0]
     .addEventListener("click", () =>{
 
-        let inputStr = document
+        const inputDataElem = document
             .getElementById("root")
-            .getElementsByTagName("input")[0]
-            .value;
+            .getElementsByTagName("input")[0];
+
+        const inputElem = document.querySelector('input[type="text"]')
+
+
+        const inputStr = inputDataElem.value;
 
         const mutableStrObj = { str: inputStr }
         const time = matchTime(mutableStrObj);
@@ -25,11 +29,13 @@ document.getElementById("root")
 */
         if(!time || !name || !startNum || mutableStrObj.str.length > 0){
             console.log("fail");
-            document.getElementById("root")
-                .getElementsByTagName("input")[0]
-                .classList
-                .add("input:invalid");
+            inputElem.classList.remove("input");
+            inputElem.classList.add("input:invalid");
+            console.log(inputElem);
+            return;
         }
+        alert("fuck you");
+
 
     });
 
