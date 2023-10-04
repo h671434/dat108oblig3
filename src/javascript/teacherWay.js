@@ -11,7 +11,7 @@ class DeltagerManager {
         this.#regElm = root.getElementsByClassName("registrering")[0];
 
         const regButton = this.#regElm.getElementsByTagName("button")[0];
-        regButton.addEventListener("click", this.#registrerdeltager);
+        regButton.addEventListener("click", () => {this.#registrerdeltager()});
 
         this.#statElm = root.getElementsByClassName("statistikk")[0];
         const statButton = this.#statElm.getElementsByTagName("button")[0];
@@ -33,66 +33,29 @@ class DeltagerManager {
     }
 
     #registrerdeltager() {
-        const tidReg = /\d{1,2}:\d{1,2}:\d{1,2}/ug;
-        const startnummerReg = /\d{1,3}/g;
-        const navnReg = /\p{L}{2,}(?:-\p{L}{2,})?/gu;
+        const rules = {
+            time: /(\d{0,2}):(\d{0,2}):(\d{0,2})/ug,
+            person: /\p{L}{2,}(?:-\p{L}{2,})?/gu,
+            startnum: /(?<!:)\b\d{1,3}\b(?!:)/g
+        };
 
         const inputDataElem = this.#regElm.getElementsByTagName("input")[0]; //use queuryselector instead
 
+        const stringInput = inputDataElem.value;
 
-        //retrieve and change data
-        const mutableStrObj = { str: inputDataElem.value }
-        const time = this.#matchAndReplace(mutableStrObj, tidReg)[0];
-        const name = this.#matchAndReplace(mutableStrObj, navnReg, 3);
-        const startNum = parseInt(this.#matchAndReplace(mutableStrObj, startnummerReg)[0]);
-        mutableStrObj.str = mutableStrObj.str.replace(/\s/g, "");
-
-        //validity of input
-        const validationCheck = [
-            {check: !time, message: "missing time"},
-            {check: !name, message: "missing name"},
-            {check: !startNum, message: "missing starting number"},
-            {check: name.length < 2, message: "There has to atleast be 2 names"},
-            {check: this.#checkValidInputChars(inputDataElem.value), message: "input contains invalid chars"},
-            {check: this.#users.has(startNum), message: "user with the same start number already exsists"}
-        ];
-        const errors = validationCheck
-            .filter( a => a.check)
-            .map( a => a.message)
-            .join(", ");
-        if(errors){
-            inputDataElem.setCustomValidity(errors);
-            return;
-        } else if(mutableStrObj.str.length > 0) {
-            console.log(mutableStrObj.str);
-            inputDataElem.setCustomValidity("overflow of data in input");
-            return
-        }
-
-        //add user to map
-        const user = {id: startNum, name: name, time: time};
-        this.#users.set(startNum, user)
-        console.log(this.#users);
-        inputDataElem.value = "";
-
-        //find the fastest
-        const fastestElem = this.#regElm.getElementsByTagName("div")[1];
-        let fastestTime = Infinity;
-        let fastestTimeFormatted = "00:00:00";
-
-        this.#users.forEach( user => {
-            if(this.#timeToSeconds(user.time) < fastestTime){
-                fastestTime = this.#timeToSeconds(user.time);
-                fastestTimeFormatted = user.time;
-            }
-        });
-
-        fastestElem.getElementsByTagName("span")[0].value = "fuck you cunt";
-        fastestElem.classList.remove("hidden");
-
-        inputDataElem.setCustomValidity("");
+        const tryer = this.#getAttendantInformation(stringInput, rules);
+        console.log(tryer);
     }
 
+    #getAttendantInformation(s, rules){
+        const assarr = Object
+            .entries(rules)
+            .map( ([key, value]) => { return [key, s.match(value)] } );
+
+        const res = Object.fromEntries(assarr);
+
+        return res;
+    }
 
     #timeToSeconds(timeString) {
         const parts = timeString.split(':');
