@@ -1,6 +1,6 @@
-"user strict";
+"use strict";
 
-class user {
+class User {
     #number
     #time
     #name

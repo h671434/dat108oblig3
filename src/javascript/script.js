@@ -5,40 +5,56 @@ document.getElementById("root")
     .getElementsByTagName("button")[0]
     .addEventListener("click", () =>{
 
+        //input element
         const inputDataElem = document
             .getElementById("root")
             .getElementsByTagName("input")[0];
 
-        const inputElem = document.querySelector('input[type="text"]')
-
+        //border green
+        inputDataElem.setCustomValidity("");
 
         const inputStr = inputDataElem.value;
-
         const mutableStrObj = { str: inputStr }
+
         const time = matchTime(mutableStrObj);
         const name = matchName(mutableStrObj);
         const startNum = matchStartNum(mutableStrObj);
         mutableStrObj.str = mutableStrObj.str.replace(/\s/g, "");
-       /*
-        console.log("time: " + time);
-        console.log("name: " + name);
-        console.log("startNum: " + startNum);
-        console.log("string after remove: " + mutableStrObj.str);
 
-        console.log(mutableStrObj.str.length)
-*/
+        //validity of input
         if(!time || !name || !startNum || mutableStrObj.str.length > 0){
-            console.log("fail");
-            inputElem.classList.remove("input");
-            inputElem.classList.add("input:invalid");
-            console.log(inputElem);
+            inputDataElem.setCustomValidity("invalid input");
             return;
         }
-        alert("fuck you");
 
+        let user = [{id: startNum, name: name, time: time}];
 
+        //data saved to session or empty array
+        const prev = JSON.parse(localStorage.getItem("data"));
+
+        user = Array.isArray(prev)? user.concat(prev) : user.push(prev); //idk this is prolly dumb
+
+        user.sort((a, b) => {timeToSeconds(a.time) - timeToSeconds(b.time)});
+
+        localStorage.setItem("data", JSON.stringify(user));
     });
 
+function timeToSeconds(timeString) {
+    const parts = timeString.split(':');
+    if (parts.length !== 3) {
+        throw new Error('Invalid time format');
+    }
+
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+
+    if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+        throw new Error('Invalid time format');
+    }
+
+    return hours * 3600 + minutes * 60 + seconds;
+}
 
 function matchTime(strObj){
     try {
