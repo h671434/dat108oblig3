@@ -13,8 +13,7 @@ document.getElementById("root")
         //border green
         inputDataElem.setCustomValidity("");
 
-        const inputStr = inputDataElem.value;
-        const mutableStrObj = { str: inputStr }
+        const mutableStrObj = { str: inputDataElem.value }
 
         const time = matchTime(mutableStrObj);
         const name = matchName(mutableStrObj);
@@ -34,7 +33,7 @@ document.getElementById("root")
 
         user = Array.isArray(prev)? user.concat(prev) : user.push(prev); //idk this is prolly dumb
 
-        user.sort((a, b) => {timeToSeconds(a.time) - timeToSeconds(b.time)});
+        user.sort((a, b) => {parseInt(timeToSeconds(a.time)) - parseInt(timeToSeconds(b.timeoppgave ))});
 
         localStorage.setItem("data", JSON.stringify(user));
     });
