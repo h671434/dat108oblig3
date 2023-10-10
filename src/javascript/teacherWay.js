@@ -51,7 +51,53 @@ class DeltagerManager {
 
 
     #beregnstatistikk() {
-        // Fyll inn kode
+        const root = document.querySelector("html body div#root fieldset.statistikk");
+        const fromElem = root.getElementsByTagName("input")[0];
+        const toElem = root.getElementsByTagName("input")[1];
+
+        const timeReg = /(\d{0,2}):(\d{0,2}):(\d{0,2})/ug;
+
+        const fromTime = fromElem.value.match(timeReg)[0];
+        const toTime = toElem.value.match(timeReg)[0];
+
+        const errors = this.#validateStat(fromTime, toTime);
+
+        if(errors){
+            fromElem.setCustomValidity(errors);
+            toElem.setCustomValidity(errors);
+        }else{
+            const fromTimeSec = this.#timeToSec(fromTime);
+            const toTimeSec = this.#timeToSec(toTime);
+            let nRacers = 0;
+            this.#users.forEach(user => {
+                let userTimeSec = this.#timeToSec(user.time);
+                if (userTimeSec < toTimeSec && userTimeSec > fromTimeSec){
+                    nRacers++;
+                }
+            });
+
+            const hidden = root.getElementsByTagName("p")[0];
+            hidden.classList.remove("hidden");
+            hidden.getElementsByTagName("span")[0].textContent = nRacers.toString();
+            hidden.getElementsByTagName("span")[1].textContent = fromTime;
+            hidden.getElementsByTagName("span")[2].textContent = toTime;
+
+        }
+
+    }
+
+    #validateStat(s1, s2){
+        const errors =[
+            {check: !s1, message: "from time not entered"},
+            {check: !s2, message: "to time not entered"},
+            {check: this.#timeToSec(s2) - this.#timeToSec(s1) <= 0, message: "from time must be less than to time"},
+        ];
+
+        return errors
+            .filter(a => a.check)
+            .map(a => a.message)
+            .join(", ");
+
     }
 
     #registrerdeltager() {
@@ -127,7 +173,6 @@ class DeltagerManager {
             {check: this.#users.has(user.startnum), message: "user with the same start number already exsists"}
         ];
 
-        console.log(s.match(validInput));
 
         return validityCheck
             .filter(a => a.check)
