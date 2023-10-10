@@ -38,8 +38,13 @@ class DeltagerManager {
             inputElem.setCustomValidity("invalid input");
             root.getElementsByTagName("p")[0].classList.remove("hidden");
         }else {
+            inputElem.setCustomValidity("");
             const output = root.getElementsByTagName("dl")[0];
             output.classList.remove("hidden");
+            const outputTable = output.querySelector("dd");
+            outputTable[0].textContent = user.startnum;
+            outputTable[1].textContent = user.person;
+            outputTable[2].textContent = user.time;
         }
 
     }
@@ -68,6 +73,7 @@ class DeltagerManager {
             }
         };
 
+        const root = document.getElementsByClassName("registrering")[0];
         const inputDataElem = document.querySelector(".registrering > div:nth-child(2) > input:nth-child(1)");
         let stringInput = inputDataElem.value;
         const user = this.#getAttendantInformation(stringInput, rules);
@@ -87,10 +93,9 @@ class DeltagerManager {
             this.#timeToSec(user.time) < this.#timeToSec(fastest.time) ? user : fastest
         );
 
-        const outputElem = document.querySelector("div.hidden");
+        const outputElem = root.getElementsByTagName("div")[1];
         outputElem.classList.remove("hidden");
         outputElem.getElementsByTagName("span")[0].textContent = "" + fastestUser.time;
-
     }
 
     #timeToSec(s){
