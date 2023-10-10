@@ -24,7 +24,24 @@ class DeltagerManager {
     }
 
     #finndeltager() {
-        // Fyll inn kode
+        const root = document.querySelector("html body div#root fieldset.deltager");
+        root.getElementsByTagName("p")[0].classList.add("hidden");
+        root.getElementsByTagName("dl")[0].classList.add("hidden");
+
+
+        const inputElem = root.getElementsByTagName("input")[0];
+        const inputValue = inputElem.value;
+        const startnum = inputValue.match(/\d{1,3}/g)[0];
+        const user = this.#users.get(startnum);
+
+        if(!startnum || !user){
+            inputElem.setCustomValidity("invalid input");
+            root.getElementsByTagName("p")[0].classList.remove("hidden");
+        }else {
+            const output = root.getElementsByTagName("dl")[0];
+            output.classList.remove("hidden");
+        }
+
     }
 
 
@@ -34,70 +51,86 @@ class DeltagerManager {
 
     #registrerdeltager() {
         const rules = {
-            time: /(\d{0,2}):(\d{0,2}):(\d{0,2})/ug,
-            person: /\p{L}{2,}(?:-\p{L}{2,})?/gu,
-            startnum: /(?<!:)\b\d{1,3}\b(?!:)/g
+            time: {
+                regex: /(\d{0,2}):(\d{0,2}):(\d{0,2})/ug,
+                parse: x => x.split(':').map(y => y.padStart(2, '0')).join(":"),
+                //limit: 1
+            },
+            person: {
+                regex: /\p{L}{2,}(?:-\p{L}{2,})?/gu,
+                parse: x => x,
+                //limit: 3
+            },
+            startnum: {
+                regex: /(?<!\d|:)\b\d{1,3}\b(?!:|\d)/g,
+                parse: x => parseInt(x),
+                //limit: 1
+            }
         };
 
-        const inputDataElem = this.#regElm.getElementsByTagName("input")[0]; //use queuryselector instead
+        const inputDataElem = document.querySelector(".registrering > div:nth-child(2) > input:nth-child(1)");
+        let stringInput = inputDataElem.value;
+        const user = this.#getAttendantInformation(stringInput, rules);
 
-        const stringInput = inputDataElem.value;
+        //catch errors in input
+        const errors = this.#validate(user, stringInput);
+        if(errors){
+            inputDataElem.setCustomValidity(errors);
+            return;
+        }
 
-        const tryer = this.#getAttendantInformation(stringInput, rules);
-        console.log(tryer);
+        //return frame to green
+        inputDataElem.setCustomValidity("");
+        this.#users.set(user.startnum, user);
+
+        const fastestUser = Array.from(this.#users.values()).reduce((fastest, user) =>
+            this.#timeToSec(user.time) < this.#timeToSec(fastest.time) ? user : fastest
+        );
+
+        const outputElem = document.querySelector("div.hidden");
+        outputElem.classList.remove("hidden");
+        outputElem.getElementsByTagName("span")[0].textContent = "" + fastestUser.time;
+
+    }
+
+    #timeToSec(s){
+        return s.split(':').reduce((acc, val, index) => acc + parseInt(val) * (index === 0 ? 3600 : index === 1 ? 60 : 1), 0);
     }
 
     #getAttendantInformation(s, rules){
-        const assarr = Object
-            .entries(rules)
-            .map( ([key, value]) => { return [key, s.match(value)] } );
-
-        const res = Object.fromEntries(assarr);
-
-        return res;
+        const assoc = Object.entries(rules)
+            .map(([key, { parse, regex }]) => { //limit as third param in destruct
+                const matches = [...s.matchAll(regex)]
+                    //.slice(0, limit);
+                return [key, matches.map(([match]) => parse(match)).join(' ')];
+            });
+        return Object.fromEntries(assoc);
     }
 
-    #timeToSeconds(timeString) {
-        const parts = timeString.split(':');
-        if (parts.length !== 3) {
-            throw new Error('Invalid time format');
-        }
+    #validate(user, s){
+        const validInput = /[^0-9a-zA-Z:\s-]/g;
 
-        const hours = parseInt(parts[0], 10);
-        const minutes = parseInt(parts[1], 10);
-        const seconds = parseInt(parts[2], 10);
+        const validityCheck = [
+            {check: !user.time, message: "missing time"},
+            {check: user.time.split(" ").length > 1, message: "only one time can be entered"},
+            {check: !user.person, message: "missing name"},
+            {check: !user.startnum, message: "missing starting number"},
+            {check: user.startnum.split(" ").length > 1, message: "only one start number can be entered"},
+            {check: user.person.split(" ").length < 2, message: "There has to atleast be 2 names"},
+            {check: user.person.split(" ").length > 3, message: "There's a maximum of 3 names"},
+            {check: s.match(validInput), message: "input contains invalid chars"},
+            {check: this.#users.has(user.startnum), message: "user with the same start number already exsists"}
+        ];
 
-        if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
-            throw new Error('Invalid time format');
-        }
+        console.log(s.match(validInput));
 
-        return hours * 3600 + minutes * 60 + seconds;
+        return validityCheck
+            .filter(a => a.check)
+            .map(a => a.message)
+            .join(", ");
     }
 
 
-    #checkValidInputChars(str){
-        const regex = /^[0-9a-zA-Z]+$/g;
-        return str.match(regex) !== null;
-    }
-
-    #matchAndReplace(strObj, regex, numMatches = 1){
-        try {
-            const match = strObj.str.match(regex);
-            if(match && match.length >= numMatches){
-                const replacedMatches = match.slice(0, numMatches).join("");
-                strObj.str = strObj.str.replace(replacedMatches, "");
-                return match.slice(0, numMatches);
-            } else if( match.length <= numMatches){
-                strObj.str = strObj.str.replace(regex, "");
-                return match.slice(0, match.length);
-            } else {
-                return null;
-            }
-        } catch (e) {
-            console.error(e);
-            return null;
-        }
-    }
 }
 
 const rootelement = document.getElementById("root");
