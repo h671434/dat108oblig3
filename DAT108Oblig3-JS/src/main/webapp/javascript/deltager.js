@@ -4,7 +4,7 @@ class DeltagerManager {
     #regElm;
     #statElm;
     #finndeltagerElm;
-    // Deklarer resterende felt-variabler her
+
     #deltakere;
 
     constructor(root) {
@@ -21,35 +21,134 @@ class DeltagerManager {
         const deltagerButton = this.#finndeltagerElm.getElementsByTagName("button")[0];
         deltagerButton.addEventListener("click", () => { this.#finndeltager() });
         
-        // Fyll evt. inn mer kode
         this.#deltakere = new Map();
     }
 
     #finndeltager() {
-        // Fyll inn kode  
-        const resokElm = this.#finndeltagerElm.getElementsByClassName("hidden resultatok")[0];
-        const ingenResElm = this.#finndeltagerElm.getElementsByClassName("hidden resultatmangler")[0];
-        const inputClassElm = this.#finndeltagerElm.getElementsByClassName("input")[0]; 
-        const inputElm = inputClassElm.getElementsByTagName("input")[0];
+        const resultatOkElm = this.#finndeltagerElm.getElementsByClassName("resultatok")[0];
+        const ingenResultatElm = this.#finndeltagerElm.getElementsByClassName("resultatmangler")[0];
+        const inputDiv = this.#finndeltagerElm.getElementsByClassName("input")[0]; 
+        const inputElm = inputDiv.getElementsByTagName("input")[0];
         
-        let input = inputElm.value;
+        if(!inputElm.validity.valid) {
+			ingenResultatElm.classList.remove("hidden");
+			resultatOkElm.classList.remove("hidden");
+			
+			return;
+		}
         
-       	let deltaker = this.#deltakere.get(input);
+        let input = parseInt(inputElm.value);
         
-        
-    }
+        if(this.#deltakere.has(input)) {
+			let deltaker = this.#deltakere.get(input);
 
+			const outputFelt = resultatOkElm.getElementsByTagName("dd");
+		
+			outputFelt[0].innerHTML = deltaker.startnummer; 
+			outputFelt[1].innerHTML = deltaker.navn; 
+			outputFelt[2].innerHTML = deltaker.slutttid; 
+
+			resultatOkElm.classList.remove("hidden");
+			ingenResultatElm.classList.add("hidden");
+		} else {
+			ingenResultatElm.classList.remove("hidden");
+			resultatOkElm.add("hidden");
+		}      
+    }
 
     #beregnstatistikk() {
-        // Fyll inn kode        
+		const resultatElm = this.#statElm.getElementsByClassName("resultat")[0];
+		const nedregrenseElm = document.getElementById("nedregrense");
+		const ovregrenseElm = document.getElementById("ovregrense");
+		
+		nedregrenseElm.setCustomValidity("");
+		ovregrenseElm.setCustomValidity("");
+		
+		if(!nedregrenseElm.validity.valid) {
+			nedregrenseElm.setCustomValidity("Angi et gyldig tidspunkt");
+			nedregrenseElm.reportValidity();
+			
+			return;
+		}
+		if(!ovregrenseElm.validity.valid) {
+			ovregrenseElm.setCustomValidity("Angi et gyldig tidspunkt");
+			ovregrenseElm.reportValidity();
+			
+			return;
+		}
+		
+		let nedregrenseStr = this.#formaterTid(nedregrenseElm.value)
+		let ovregrenseStr = this.#formaterTid(ovregrenseElm.value)
+		let nedregrense = this.#tidTilSekunder(nedregrenseStr);
+		let ovregrense = this.#tidTilSekunder(ovregrenseStr);
+
+		if(nedregrense > ovregrense) {
+			nedregrenseElm.setCustomValidity("\"Fra\" verdi må være mindre en \"til\" verdi");
+			nedregrenseElm.reportValidity();
+			ovregrenseElm.setCustomValidity("\"Til\" verdi må være større en \"fra\" verdi");
+			ovregrenseElm.reportValidity();
+			resultatElm.classList.add("hidden");
+			
+			return;
+		}
+		
+		let antall = 0;
+		
+		this.#deltakere.forEach(deltaker => {
+			let deltakertid = this.#tidTilSekunder(deltaker.slutttid);
+			
+			if(deltakertid > nedregrense && deltakertid < ovregrense) {
+				antall++;
+			}
+		});
+		
+		const outputFelt = resultatElm.getElementsByTagName("span");
+		
+		outputFelt[0].innerHTML = antall; 
+		outputFelt[1].innerHTML = nedregrenseStr; 
+		outputFelt[2].innerHTML = ovregrenseStr; 
+
+		nedregrenseElm.setCustomValidity("");
+		ovregrenseElm.setCustomValidity("");
+		resultatElm.classList.remove("hidden");
     }
+	
+	#formaterTid(inputTid) {
+		if(inputTid.length == 8) {
+			return inputTid;
+		}
+		
+		let split1 = inputTid.indexOf(":");
+		let split2 = inputTid.lastIndexOf(":");
+		
+		let timerUformatert = inputTid.substring(0, split1);
+		let minutterUformatert = inputTid.substring(split1 + 1, split1 + 3);;
+		let sekunderUformatert = "";
+
+		if(split1 != split2 || split2 == -1) {
+			sekunderUformatert = inputTid.substring(split2 + 1, inputTid.length);
+		}
+
+		let timer = ("00" + timerUformatert).slice(-2);
+		let minutter = ("00" + minutterUformatert).slice(-2);
+		let sekunder = ("00" + sekunderUformatert).slice(-2);
+		
+		return ('' + timer + ':' + minutter + ':' + sekunder);
+	}
+    
+    #tidTilSekunder(tid) {
+		let timer = parseInt(tid.substring(0, 2));
+		let minutter = parseInt(tid.substring(3, 5));
+		let sekunder = parseInt(tid.substring(6, 8));
+		
+		return (timer * 60 * 60) + (minutter * 60) + sekunder;
+	}
 
     #registrerdeltager() {
         const tidReg = /(?:\d{0,2}:){2}\d{0,2}/g;
         const startnummerReg = /\d{1,3}/g;
         const navnReg = /\p{L}{2,}(?:-\p{L}{2,})?/gu;
         
-         // Fyll inn kode
         const inputElm = this.#regElm.getElementsByTagName("input")[0]; 
 		
 		let input = inputElm.value;
@@ -76,19 +175,16 @@ class DeltagerManager {
 		this.#deltakere.set(startnummer, deltaker);
 		
 		inputElm.setCustomValidity("");
-		
-      	console.log(deltaker);
     }
-    
-       // Fyll inn evt. hjelpemetoder
-    
+
     #testLovligeKarakterer(input) {
-		const lovlig = /^[0-9a-zA-Z]+$/g;
+		const lovlig = /[0-9a-zA-Z]|:| /g;
+		let ulovlige = input.replace(lovlig, "");
 		
- 		if (!lovlig.test(input)) {
-			let ulovlige = input.replaceAll(lovlig, "");
+ 		if (ulovlige.length > 0) {
+			let tegn = ulovlige.split('').toString();
 			
-			throw new Error("Ulovlige tegn i input: " + ulovlige)
+			throw new Error("Ulovlige tegn i input: " + tegn)
      	}
 	}
     
@@ -118,7 +214,7 @@ class DeltagerManager {
 		if (results == null) {
 			throw new Error("Angi et gyldig navn for deltaker");
 		}
-		if (results.length = 1) {
+		if (results.length == 1) {
 			throw new Error("Deltaker må ha både fornavn og etternavn");
 		}
 		
@@ -127,7 +223,6 @@ class DeltagerManager {
     
     #formaterNavn(navnMatcher) {
 		const forsteBokstavReg = /(^|-)(\p{L})/gu;
-		
 		let formatertNavn = '';
 		
 		navnMatcher.forEach(navn => {
@@ -173,25 +268,6 @@ class DeltagerManager {
 		})
 		
 		return gyldig;
-	}
-	
-	#formaterTid(inputTid) {
-		if(inputTid.length == 8) {
-			return inputTid;
-		}
-		
-		let split1 = inputTid.indexOf(":");
-		let split2 = inputTid.lastIndexOf(":");
-		
-		let timer = inputTid.substring(0, split1 - 1);
-		let minutter = inputTid.substring(split1 + 1, split2 - 1);
-		let sekunder = inputTid.substring(split2 + 1, inputTid.length - 1);
-		
-		timer = ("00" + timer).slice(-2);
-		minutter = ("00" + timer).slice(-2);
-		sekunder = ("00" + timer).slice(-2);
-		
-		return ('' + timer + ':' + minutter + ':' + sekunder);
 	}
     
 }
