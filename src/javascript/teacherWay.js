@@ -42,7 +42,7 @@ class DeltagerManager {
             inputElem.setCustomValidity("");
             const output = document.getElementsByTagName("dl")[0];
             output.classList.remove("hidden");
-            const outputTable = output.querySelector("dd");
+            const outputTable = output.getElementsByTagName("dd");
             outputTable[0].textContent = user.startnum;
             outputTable[1].textContent = user.person;
             outputTable[2].textContent = user.time;
@@ -112,7 +112,7 @@ class DeltagerManager {
             },
             person: {
                 regex: /\p{L}{2,}(?:-\p{L}{2,})?/gu,
-                parse: x => x,
+                parse: x => x.charAt(0).toUpperCase() + x.slice(1).toLowerCase(),
                 //limit: 3
             },
             startnum: {
