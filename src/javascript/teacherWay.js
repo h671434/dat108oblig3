@@ -40,7 +40,7 @@ class DeltagerManager {
             root.getElementsByTagName("p")[0].classList.remove("hidden");
         }else {
             inputElem.setCustomValidity("");
-            const output = root.getElementsByTagName("dl")[0];
+            const output = document.getElementsByTagName("dl")[0];
             output.classList.remove("hidden");
             const outputTable = output.querySelector("dd");
             outputTable[0].textContent = user.startnum;
@@ -52,6 +52,8 @@ class DeltagerManager {
 
 
     #beregnstatistikk() {
+        //due to issues with the locale the format of the input tag has been changed to text type.
+        //when using input time I cannot force a 24 hour format!
         const root = document.querySelector("html body div#root fieldset.statistikk");
         const fromElem = root.getElementsByTagName("input")[0];
         const toElem = root.getElementsByTagName("input")[1];
